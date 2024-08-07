@@ -1,5 +1,6 @@
- import User from '..models/user.models.js'
- import bcrypt from 'bcryptjs'
+ import User from '../models/user.model.js';
+ import bcrypt from 'bcryptjs';
+ import { generateTokenAndSetCookie } from '../lib/utils/generateToken.js';
  
  export const signup = async (req,res) => {
    try {
@@ -18,7 +19,10 @@
      if (existingEmail) {
         return res.status(400).json({error: "Email already exists"});
      }
-
+     
+     if (password.length < 6) {
+        return res.status(400).json({error: "Password length must me at least six characters long" })
+     }
      //hashing the password
      const salt = await bcrypt.genSalt(10);
      const hashedPassword = await bcrypt.hash(password, salt);
