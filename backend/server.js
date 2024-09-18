@@ -1,9 +1,11 @@
 import express from "express";
+import dotenv from 'dotenv';
+import cookieParser from "cookie-parser";
+
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 
-import dotenv from 'dotenv';
-import cookieParser from "cookie-parser";
+
 import connectMondoDB from './db/connectMongoDB.js'
 
 dotenv.config();
