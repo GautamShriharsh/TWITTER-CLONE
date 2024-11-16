@@ -93,8 +93,8 @@ export const commentOnPost = async (req,res) => {
 
 export const likeUnlikePost = async (req,res) => {
     try {
-        const {id:postId} = req.params;
-        const userId = req.user._id;
+        const {id:postId} =  mongoose.Types.ObjectId(req.params.id);
+        const userId = mongoose.Types.ObjectId(req.user._id);
 
         const post = await Post.findById(postId);
 
@@ -208,6 +208,27 @@ export const getFollowingPosts = async (req,res) => {
     }
 }
 
+export const getUserPosts = async (req,res) => {
+    try {
+        const { username } = req.params;
+        const user = await User.findOne({ username});
+        if (!user) {
+            return res.status(404).json({error: "User not found"});
+        };
+        const posts = await Post.find({ user: user._id}).sort({ createdAt: -1})
+        .populate({
+            path: "comments.user",
+            select: "-password",
+        });
+
+        res.status(200).json(posts);
+
+    } catch (error) {
+        console.log("Error in getUserPosts controller: ", error);
+        res.status(500).json({error: "Internal server error"});
+    }
+}
+
 // Change this if necessary
 export default {
     createPost,
@@ -217,5 +238,6 @@ export default {
     getAllPosts,
     getLikedPosts,
     getFollowingPosts,
+    getUserPosts,
   };
   
