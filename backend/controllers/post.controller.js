@@ -115,7 +115,7 @@ export const likeUnlikePost = async (req,res) => {
             //like post
             post.likes.push(userId);
             
-            await User.updateOne({ _id: userId},{$push: { likedPost: postId}});
+            await User.updateOne({ _id: userId},{$push: { likedPosts: postId}});
 
             await post.save();
 
@@ -159,31 +159,52 @@ export const getAllPosts = async (req,res) => {
     }
 };
 
-export const getLikedPosts = async (req,res) => {
+export const getLikedPosts = async (req, res) => {
     const userId = req.params.id;
 
     try {
         const user = await User.findById(userId);
-        // console.log("User likedPosts:", user.likedPosts); 
-         // Log this to check if likedPosts has valid ObjectId references
-        
-       if (!user) {
-        return res.status(404).json({error: "User not found"});
-       }
-       const likedPosts = await Post.find({_id: {$in: user.likedPosts}}).populate({
-        path: "user",
-        select: "-password"
-       }).populate({
-        path: "comments.user",
-        select: "-password",
-       });
+        if (!user) return res.status(404).json({ error: "User not found" });
 
-       res.status(200).json(likedPosts);
-       console.log("Liked posts IDs:", user.likedPosts);
+        const likedPosts = await Post.find({ _id: { $in: user.likedPosts } })
+            .populate({
+                path: "user",
+                select: "-password",
+            })
+            .populate({
+                path: "comments.user",
+                select: "-password",
+            });
 
+        res.status(200).json(likedPosts);
     } catch (error) {
         console.log("Error in getLikedPosts controller: ", error);
-        res.status(500).json({error: "Internal server error"});
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const getFollowingPosts = async (req,res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User.findById(userId);
+        if (!user) {
+           return res.status(404).json({error: "User not found"}); 
+        }
+        const following = user.following;
+
+        const feedPosts = await Post.find({user: { $in: following}}).sort({createdAt: -1})
+        .populate({
+            path: "user",
+            select: "-password",
+        })
+        .populate({
+            path: "comments.user",
+            select: "-password",
+        });
+         res.status(200).json(feedPosts);
+    } catch (error) {
+        console.log("Error in getFollowingPosts constroller: ", error);
+        res.status(500).json({error: "Internal server Error"});
     }
 }
 
@@ -195,5 +216,6 @@ export default {
     likeUnlikePost,
     getAllPosts,
     getLikedPosts,
+    getFollowingPosts,
   };
   
