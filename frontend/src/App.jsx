@@ -13,12 +13,14 @@ import { useQuery } from "@tanstack/react-query";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 
 function App() {
-   const { data:authUser,isLoading,isError,error } = useQuery({
+   const { data:authUser,isLoading} = useQuery({
+    //we use queryKey to give a unique name to our query and refer to it later
     queryKey: ['authUser'],
     queryFn: async () => {
       try {
         const res = await fetch("/api/auth/me");
         const data = await res.json();
+        if (data.error) return null;
         if (!res.ok) {
           throw new Error(data.error || "Something went wrong")
         }
@@ -28,7 +30,8 @@ function App() {
       } catch (error) {
         throw new Error(error);
       }
-    }
+    },
+    retry: false,
   });
 
   if (isLoading) {
@@ -40,7 +43,7 @@ function App() {
   }
   return (
     <div className='flex max-w-6xl mx-auto'>
-    <Sidebar /> {/* Sidebar will always be present */}
+   { authUser && <Sidebar />} {/* Sidebar will always be present */}
   
    <Routes>
     <Route path="/" element={authUser ? <HomePage /> : <Navigate to='/login' />} />
@@ -52,7 +55,7 @@ function App() {
    </Routes>
 
     
-    <RightPanel /> {/* RightPanel will always be present */}
+   { authUser && <RightPanel />} {/* RightPanel will always be present */}
     <Toaster />
   </div>
   );
