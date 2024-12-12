@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
+import { formatPostDate } from "../../utils/date";
 
 import LoadingSpinner from "./LoadingSpinner";
 // import { formatPostDate } from "../../utils/date";
@@ -19,11 +20,9 @@ const Post = ({ post }) => {
 	const isLiked = post.likes.includes(authUser._id);
 
 	const isMyPost = authUser._id === post.user._id;
-
+	const formattedDate = formatPostDate(post.createdAt);
     console.log(post);
 
-
-	//const formattedDate = formatPostDate(post.createdAt);
 
 	const { mutate: deletePost, isPending: isDeleting } = useMutation({
 		mutationFn: async () => {
@@ -123,6 +122,8 @@ const Post = ({ post }) => {
 	   }
 	});
 
+	
+
 	const handleDeletePost = () => {
 		deletePost();
 	};
@@ -154,7 +155,7 @@ const Post = ({ post }) => {
 						<span className='text-gray-700 flex gap-1 text-sm'>
 							<Link to={`/profile/${postOwner.username}`}>@{postOwner.username}</Link>
 							<span>·</span>
-							{/* <span>{formattedDate}</span> */}
+							<span>{formattedDate}</span>
 						</span>
 						{isMyPost && (
 							<span className='flex justify-end flex-1'>
