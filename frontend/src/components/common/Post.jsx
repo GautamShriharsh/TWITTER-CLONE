@@ -84,34 +84,43 @@ const Post = ({ post }) => {
 		},
 	});
 
-	const { mutate: commentPost, isPending: isCommenting } = useMutation({
-		mutationFn: async () => {
-			try {
-				const res = await fetch(`/api/posts/comment/${post._id}`, {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ text: comment }),
-				});
-				const data = await res.json();
+	const {mutate: commentPost, isPending: isCommenting } = useMutation({
+       mutationFn: async () => {
+		try {
+			const res = await fetch(`api/posts/comment/${post._id}`,{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+                },
+				body: JSON.stringify({text: comment}),
+			});
+			const data = await res.json();
 
-				if (!res.ok) {
-					throw new Error(data.error || "Something went wrong");
-				}
-				return data;
-			} catch (error) {
-				throw new Error(error);
+			if (!res.ok) {
+				throw new Error(data.error || "Something went wrong");
 			}
-		},
-		onSuccess: () => {
-			toast.success("Comment posted successfully");
-			setComment("");
-			queryClient.invalidateQueries({ queryKey: ["posts"] });
-		},
-		onError: (error) => {
-			toast.error(error.message);
-		},
+			return data;
+		} catch (error) {
+			throw new Error(error);
+		}
+	   },
+	   onSuccess: (updatedComments) => {
+		toast.success("Comment posted successfully");
+		setComment("");
+		document.getElementById(`comments_modal${post._id}`).close(); // Close the comment box
+		//queryClient.invalidateQueries({queryKey: ["posts"]});
+		queryClient.setQueryData(["posts"], (oldData) => {
+			return oldData.map((p) => {
+				if (p._id === post._id) {
+					return { ...p, comments: updatedComments };
+				}
+				return p;
+			});
+		});
+	   },
+	   onError: (error) => {
+         toast.error(error.message);
+	   }
 	});
 
 	const handleDeletePost = () => {
@@ -178,6 +187,7 @@ const Post = ({ post }) => {
 									{post.comments.length}
 								</span>
 							</div>
+							{/* We're using Modal Component from DaisyUI */}
 							{/* We're using Modal Component from DaisyUI */}
 							<dialog id={`comments_modal${post._id}`} className='modal border-none outline-none'>
 								<div className='modal-box rounded border border-gray-600'>
