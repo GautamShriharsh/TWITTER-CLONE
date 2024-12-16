@@ -12,7 +12,7 @@ import { formatPostDate } from "../../utils/date";
 import LoadingSpinner from "./LoadingSpinner";
 // import { formatPostDate } from "../../utils/date";
 
-const Post = ({ post }) => {
+const Post = ({ post , feedType, username, userId}) => {
 	const [comment, setComment] = useState("");
 	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 	const queryClient = useQueryClient();
@@ -69,7 +69,7 @@ const Post = ({ post }) => {
 			// queryClient.invalidateQueries({ queryKey: ["posts"] });
 
 			// instead, update the cache directly for that post
-			queryClient.setQueryData(["posts"], (oldData) => {
+			queryClient.setQueryData( ["posts", feedType, username, userId], (oldData) => {
 				return oldData.map((p) => {
 					if (p._id === post._id) {
 						return { ...p, likes: updatedLikes };
@@ -82,6 +82,7 @@ const Post = ({ post }) => {
 			toast.error(error.message);
 		},
 	});
+
 
 	const {mutate: commentPost, isPending: isCommenting } = useMutation({
        mutationFn: async () => {
@@ -122,8 +123,8 @@ const Post = ({ post }) => {
 	   }
 	});
 
-	
 
+	
 	const handleDeletePost = () => {
 		deletePost();
 	};

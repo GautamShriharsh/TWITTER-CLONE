@@ -223,9 +223,14 @@ export const getUserPosts = async (req,res) => {
         };
         const posts = await Post.find({ user: user._id}).sort({ createdAt: -1})
         .populate({
+            path: "user",
+            select: "-password",
+        })
+        .populate({
             path: "comments.user",
             select: "-password",
         });
+
 
         res.status(200).json(posts);
 
