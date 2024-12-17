@@ -11,9 +11,11 @@ import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
-import { useQuery } from "@tanstack/react-query";
+import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { formatMemberSinceDate } from "../../utils/date";
+import useFollow from "../../hooks/useFollow";
+import toast from "react-hot-toast";
 
 const ProfilePage = () => {
 	const [coverImg, setCoverImg] = useState(null);
@@ -23,28 +25,74 @@ const ProfilePage = () => {
 	const coverImgRef = useRef(null);
 	const profileImgRef = useRef(null);
 
-	const {username} = useParams()
+	const {username} = useParams();
 
-	const isMyProfile = true;
-    
+    const {follow,isPending} = useFollow();
+	const queryClient = useQueryClient();
+    const {data:authUser} = useQuery({queryKey:["authUser"]});
+
 	const {data:user, isLoading, refetch, isRefetching} = useQuery({
-		queryKey:["userProfile"],
+		queryKey:["userProfile", username],
 		queryFn: async () => {
 			try {
-				const res = await fetch(`/api/users/profile/${username}`)
+				const res = await fetch(`/api/users/profile/${username}`);
 				const data = await res.json();
 				if (!res.ok) {
-					throw new Error(error.error || "Something went wrong");
+					throw new Error(data.error || "Something went wrong");
 				}
 				return data;
 			} catch (error) {
+				throw new Error(error.message || "Something went wrong");
 				
 			}
 		}
 	});
 
+	const {mutate:updateProfile,isPending:isUpdatingProfile} = useMutation({
+       mutationFn: async () => {
+		
+		if (!coverImg && !profileImg) {
+            throw new Error("Please select an image to update.");
+        }
+
+		try {
+			const res = await fetch(`/api/users/update`, {
+				method: "POST",
+				headers: {
+                    "Content-Type": "application/json",
+                },
+
+				body: JSON.stringify({
+                    coverImg,
+                    profileImg,
+                }),
+
+			})
+			const data = await res.json()
+			if (!res.ok) {
+				throw new Error(data.error || "Something went wrong");
+			}
+			return data;
+		} catch (error) {
+			throw new Error(error.message);
+		}
+	   },
+	   onSuccess: async () => {
+		toast.success("Profile updated successfully");
+		await Promise.all([
+			queryClient.invalidateQueries({queryKey: ["authUser"]}),
+			queryClient.invalidateQueries({queryKey: ["userProfile",username]}),
+
+		])
+	   },
+	   onError: (error) => {
+		toast.error(error.message);
+	   },
+	});
+
+	const isMyProfile = authUser._id === user?._id
 	const memberSinceDate = formatMemberSinceDate(user?.createdAt)
-	
+	const amIFollowing = authUser?.following.includes(user?._id);
 	
 
 	const handleImgChange = (e, state) => {
@@ -52,16 +100,21 @@ const ProfilePage = () => {
 		if (file) {
 			const reader = new FileReader();
 			reader.onload = () => {
-				state === "coverImg" && setCoverImg(reader.result);
-				state === "profileImg" && setProfileImg(reader.result);
+				if(state === "coverImg") setCoverImg(reader.result);
+				if(state === "profileImg") setProfileImg(reader.result);
+				toast.success("Image loaded. Click Update to save changes.");
 			};
 			reader.readAsDataURL(file);
 		}
 	};
 
+	 
+
 	useEffect(() => {
          refetch()
 	},[username, refetch])
+
+	
 
 	return (
 		<>
@@ -131,17 +184,19 @@ const ProfilePage = () => {
 								{!isMyProfile && (
 									<button
 										className='btn btn-outline rounded-full btn-sm'
-										onClick={() => alert("Followed successfully")}
+										onClick={() => follow(user?._id)}
 									>
-										Follow
-									</button>
+										{ isPending && "Loading..." }
+										{!isPending && amIFollowing && "Unfollow"}
+										{!isPending && !amIFollowing && "Follow"}
+									</button>	
 								)}
 								{(coverImg || profileImg) && (
 									<button
 										className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-										onClick={() => alert("Profile updated successfully")}
+										onClick={() => updateProfile()}
 									>
-										Update
+										{isUpdatingProfile ? "Updating..." : "Update"}
 									</button>
 								)}
 							</div>
