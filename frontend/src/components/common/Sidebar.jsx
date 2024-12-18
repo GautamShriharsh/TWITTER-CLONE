@@ -11,7 +11,8 @@ import toast from "react-hot-toast";
 const Sidebar = () => {
 	
 	const queryClient = useQueryClient();
-
+	const { data: authUser } = useQuery({queryKey: ["authUser"]});
+    
 	const { mutate:logout} = useMutation({
 		mutationFn: async() => {
 			try {
@@ -35,7 +36,9 @@ const Sidebar = () => {
 		}
 	})
 	
-	const {data:authUser} = useQuery({queryKey: ["authUser"]})
+
+	console.log("authUser in Sidebar:", authUser);
+
 
 	return (
 		<div className='md:flex-[2_2_0] w-18 max-w-52'>

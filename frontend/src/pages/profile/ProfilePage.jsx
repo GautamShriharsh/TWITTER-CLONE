@@ -32,7 +32,7 @@ const ProfilePage = () => {
     const {data:authUser} = useQuery({queryKey:["authUser"]});
 
 	const {data:user, isLoading, refetch, isRefetching} = useQuery({
-		queryKey:["userProfile"],
+		queryKey:["userProfile", username],
 		queryFn: async () => {
 			try {
 				const res = await fetch(`/api/users/profile/${username}`);
@@ -67,7 +67,12 @@ const ProfilePage = () => {
 			reader.readAsDataURL(file);
 		}
 	};
-
+     
+	// useEffect(() => {
+	// 	setCoverImg(user?.coverImg || null);
+	// 	setProfileImg(user?.profileImg || null);
+	// }, [user]);
+	
 	 
 
 	useEffect(() => {
@@ -140,7 +145,7 @@ const ProfilePage = () => {
 								</div>
 							</div>
 							<div className='flex justify-end px-4 mt-5'>
-								{isMyProfile && <EditProfileModal authUser={authUser}/>}
+								{isMyProfile && <EditProfileModal />}
 								{!isMyProfile && (
 									<button
 										className='btn btn-outline rounded-full btn-sm'
@@ -178,7 +183,7 @@ const ProfilePage = () => {
 											<>
 												<FaLink className='w-3 h-3 text-slate-500' />
 												<a
-													href='https://www.youtube.com'
+													href={user?.link}
 													target='_blank'
 													rel='noreferrer'
 													className='text-sm text-blue-500 hover:underline'

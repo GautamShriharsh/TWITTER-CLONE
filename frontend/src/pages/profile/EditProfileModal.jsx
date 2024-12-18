@@ -1,9 +1,20 @@
 import { useState } from "react";
 import { useEffect } from "react";
 import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
-const EditProfileModal = ({authUser}) => {
+
+const EditProfileModal = () => {
 	
+    
+	const { data: authUser } = useQuery({queryKey: ["authUser"]});
+
+	if (!authUser) {
+		return <p>Loading...</p>; // Display a loading state if `authUser` is not yet fetched
+	}
+	
+
 	const [formData, setFormData] = useState({
 		fullName: "",
 		username: "",
@@ -27,8 +38,10 @@ const EditProfileModal = ({authUser}) => {
 		  });
 		}
 	  }, [authUser]);
+       
 
-	const {updateProfile,isUpdatingProfile} = useUpdateUserProfile();
+
+	const {updateProfile,isUpdatingProfile} = useUpdateUserProfile(authUser);
 
 	const handleInputChange = (e) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
